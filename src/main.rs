@@ -6,13 +6,13 @@ struct Subscription {
     status: Status,
 }
 
-// An enum is also a data type, but instead of taking multiple different types and grouping them
-// into one object like a struct, and enum instead creates multiple different data that are all
-// part of the same type. An instance of the enum can only hold one enum type at a time.
-// In technical terms, it's a "sum" type, as opposed to a struct which is a "product" type.
 #[derive(Debug, PartialEq, Eq)]
 enum Status {
     Active,
+    // new!
+    Cancelled,
+    // new!
+    Paused,
 }
 
 impl Subscription {
@@ -24,9 +24,20 @@ impl Subscription {
     }
 
     fn is_active(&self) -> bool {
-        // This time we match against a specific enum variant. What happens if we create a typo
-        // here?
         self.status == Status::Active
+    }
+
+    fn is_inactive(&self) -> bool {
+        // This is fine, but not great to read, especially if we add more variants…
+        //
+        // self.status == Status::Cancelled || self.status == Status::Paused
+        //
+        // Lets instead use `match`
+        match self.status {
+            Status::Cancelled | Status::Paused => true,
+            Status::Active => false,
+        }
+        // What happens if we add another status type?
     }
 }
 
