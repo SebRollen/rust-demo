@@ -3,31 +3,34 @@
 #[derive(Debug)]
 struct Subscription {
     plan: String,
-    status: String,
+    status: Status,
+}
+
+// An enum is also a data type, but instead of taking multiple different types and grouping them
+// into one object like a struct, and enum instead creates multiple different data that are all
+// part of the same type. An instance of the enum can only hold one enum type at a time.
+// In technical terms, it's a "sum" type, as opposed to a struct which is a "product" type.
+#[derive(Debug, PartialEq, Eq)]
+enum Status {
+    Active,
 }
 
 impl Subscription {
     fn new(plan: impl Into<String>) -> Self {
         Self {
             plan: plan.into(),
-            status: "active".to_string(),
+            status: Status::Active,
         }
     }
 
-    // New method: lets users easily check if the subscription is active.
-    // The `&self` here means it's a method, so it can be called directly on an instance of this
-    // struct.
-    //
-    // We could also have written a pure function:
-    // `fn is_active(sub: &Subscription) -> bool`
-    // and called it using `is_active(sub)` rather than `sub.is_active()`
     fn is_active(&self) -> bool {
-        self.status == "actvie" // oops!
+        // This time we match against a specific enum variant. What happens if we create a typo
+        // here?
+        self.status == Status::Active
     }
 }
 
 fn main() {
     let sub = Subscription::new("my-plan");
-    // assert! will panic (error) if the argument is not true
     assert!(sub.is_active());
 }
