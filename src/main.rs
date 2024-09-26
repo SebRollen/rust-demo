@@ -10,12 +10,7 @@ struct Subscription {
 #[derive(Debug, PartialEq, Eq)]
 enum Status {
     Active,
-    Cancelled {
-        // Surprise! enums can also contain state.
-        // In this case, we don't use an Option<NaiveDateTime>, because we want to guarantee that a
-        // subscription in the Cancelled state has a cancelled_at time set.
-        cancelled_at: NaiveDateTime,
-    },
+    Cancelled { cancelled_at: NaiveDateTime },
     Paused,
 }
 
@@ -39,33 +34,40 @@ impl Subscription {
     }
 
     fn cancelled_at_month(&self) -> Option<u32> {
-        // We now need to match on status rather than cancelled_at, since the field lives inside
-        // the status enum
         match self.status {
             Status::Cancelled { cancelled_at } => Some(cancelled_at.month()),
-            // Any other status us uncancelled, so all we can do is return None
             _ => None,
         }
     }
 
-    // This method takes &mut self, and returns nothing, meaning that we just modify our instance
-    // in place.
-    // We'll return the cancellation date for easy inspection
-    fn cancel(&mut self) -> NaiveDateTime {
-        let cancelled_at = chrono::Local::now().naive_local();
-        self.status = Status::Cancelled { cancelled_at };
-        cancelled_at
+    // Cancellation is _fallible_. If a subscription is already cancelled, we want to fail, not
+    // cancel it again.
+    //
+    // We can encode fallible functions as types using the `Result` enum. This enum has two
+    // variants, and is defined like this:
+    // enum Result<T, E> {
+    //   Ok(T),
+    //   Err(E)
+    // }
+    //
+    // If an operation succeeds, we return Ok. If it fails, we return Err
+    fn cancel(&mut self) -> Result<NaiveDateTime, &'static str> {
+        if let Status::Cancelled { .. } = self.status {
+            Err("Already cancelled!")
+        } else {
+            let cancelled_at = chrono::Local::now().naive_local();
+            self.status = Status::Cancelled { cancelled_at };
+            Ok(cancelled_at)
+        }
     }
 }
 
 fn main() {
     let mut sub = Subscription::new("my-plan");
-    // This is no longer valid code. We've made it impossible to get into an inconsistent state!
-    // sub.status = Status::Cancelled;
-    dbg!(sub.cancel());
+    // Unwrap is a convenience method on Result. If the Result is of the Ok variant, we extract the
+    // inner value. If it's of the Err variant, we panic
+    dbg!(sub.cancel().unwrap());
     dbg!(&sub.cancelled_at_month());
-    // Question: what happens if we cancel twice?
-    dbg!(sub.cancel());
-    // Uh-oh…
+    dbg!(sub.cancel().unwrap());
     dbg!(&sub.cancelled_at_month());
 }
