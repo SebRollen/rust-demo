@@ -1,30 +1,33 @@
 #![allow(dead_code)]
 
-// Our data. We want to model a subscription that's subscribed to a particular plan, and has some
-// status.
 #[derive(Debug)]
 struct Subscription {
     plan: String,
     status: String,
 }
 
-// In rust, the data definition and its methods are separated. The `impl` block lets us add methods
-// to the struct.
 impl Subscription {
-    // Convenience function for creating a new Subscription. We could also build one directly:
-    // let sub = Subscription { plan: "my-plan".to_string(), status: "active".to_string }
-    //
-    // One benefit of the `new` method is that we can a default value for `status`
     fn new(plan: impl Into<String>) -> Self {
         Self {
             plan: plan.into(),
             status: "active".to_string(),
         }
     }
+
+    // New method: lets users easily check if the subscription is active.
+    // The `&self` here means it's a method, so it can be called directly on an instance of this
+    // struct.
+    //
+    // We could also have written a pure function:
+    // `fn is_active(sub: &Subscription) -> bool`
+    // and called it using `is_active(sub)` rather than `sub.is_active()`
+    fn is_active(&self) -> bool {
+        self.status == "actvie" // oops!
+    }
 }
 
 fn main() {
     let sub = Subscription::new("my-plan");
-    // dbg! is a macro that lets you inspect various objects
-    dbg!(sub);
+    // assert! will panic (error) if the argument is not true
+    assert!(sub.is_active());
 }
